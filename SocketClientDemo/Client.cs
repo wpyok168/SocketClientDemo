@@ -151,6 +151,7 @@ namespace SocketClientDemo
         {
             string fileName=Path.GetFileName(filepath);
             filepath = fileName.Equals(filepath) ? "ReceivedFiles\\"+fileName : filepath;
+            //filepath = fileName.Equals(filepath) ? null : filepath;
             var message = new Message { Type = "request_file", FileName = fileName, FilePath=filepath };
             var json = JsonSerializer.Serialize(message);
             var buffer = Encoding.UTF8.GetBytes(json);
