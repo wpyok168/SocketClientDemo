@@ -25,13 +25,13 @@ namespace SocketClientDemo
             client.OnDisconnected += () => Console.WriteLine("Disconnected from server.");
             client.OnTextSent += text => Console.WriteLine($"Text sent: {text}");
             client.OnTextReceived += (text, from) => Console.WriteLine($"Text received from {from}: {text}");
-            //client.OnFileProgress += (fileName, current, total) =>
-            //    Console.WriteLine($"File progress: {fileName} ({current}/{total})");
-            //client.OnFileSent += fileName => Console.WriteLine($"File sent: {fileName}");
-            client.OnillegalConnected += text => Console.WriteLine($"Illegal connection: {text}");
+            client.OnFileProgress += (fileName, current, total) =>
+                Console.WriteLine($"File progress: {fileName} ({current}/{total})");
+            client.OnFileSent += fileName => Console.WriteLine($"File sent: {fileName}");
 
             await client.ConnectAsync("127.0.0.1", 8899);
             await client.SendTextAsync("Hello, Server!");
+
             //await client.SendFileAsync("example.txt");
         }
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)

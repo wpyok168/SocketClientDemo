@@ -25,7 +25,8 @@ namespace SocketClientDemo
         public event Action<string> OnFileSent;
         public event Action<string> OnillegalConnected;
 
-        public async Task<bool> ConnectAsync(string host, int port=8899)
+
+        public async Task<bool> ConnectAsync(string host, int port = 8899)
         {
             _client = new TcpClient();
             try
@@ -34,7 +35,7 @@ namespace SocketClientDemo
                 _stream = _client.GetStream();
                 OnConnected?.Invoke();
                 _ = Task.Run(() => ReceiveDataAsync());
-                return isconect=true;
+                return isconect = true;
             }
             catch (Exception ex)
             {
@@ -43,7 +44,7 @@ namespace SocketClientDemo
                 //throw;
                 return isconect = false;
             }
-            
+
         }
 
         public void Disconnect()
@@ -72,6 +73,9 @@ namespace SocketClientDemo
                 {
                     case "text":
                         OnTextReceived?.Invoke(message.Text, "Server");
+                        break;
+                    case "file":
+                        await ReceiveFileAsync(message);
                         break;
                         // 可扩展接收文件或其他类型处理
                 }
@@ -114,6 +118,37 @@ namespace SocketClientDemo
 
                 OnFileSent?.Invoke(fileName);
             };
+        }
+        private async Task ReceiveFileAsync(Message message)
+        {
+            var filePath = Path.Combine("ReceivedFiles", message.FileName);
+            Directory.CreateDirectory(Path.GetDirectoryName(filePath));
+
+            long existingSize = 0;
+            using (var fileStream = new FileStream(filePath, FileMode.Append, FileAccess.Write))
+            {
+                var buffer = new byte[8192];
+
+                while (existingSize < message.FileSize)
+                {
+                    int bytesRead = await _stream.ReadAsync(buffer, 0, buffer.Length);
+                    if (bytesRead == 0) break;
+
+                    fileStream.Write(buffer, 0, bytesRead);
+                    existingSize += bytesRead;
+
+                    OnFileProgress?.Invoke(message.FileName, existingSize, message.FileSize);
+                }
+
+                Console.WriteLine($"File {message.FileName} received.");
+            };
+        }
+        public async Task RequestFileAsync(string fileName)
+        {
+            var message = new Message { Type = "request_file", FileName = fileName };
+            var json = JsonSerializer.Serialize(message);
+            var buffer = Encoding.UTF8.GetBytes(json);
+            await _stream.WriteAsync(buffer, 0, buffer.Length);
         }
     }
     public class Message
