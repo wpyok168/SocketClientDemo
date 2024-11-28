@@ -41,6 +41,12 @@ namespace SocketClientDemo
         private async void button1_Click(object sender, EventArgs e)
         {
             await client.SendTextAsync("Hello, SendMsg!");
+            await client.SendFileAsync("WPS电信定制版_12.8.2.18205_Setup.exe");
+        }
+
+        private async void button2_Click(object sender, EventArgs e)
+        {
+            await client.RequestFileAsync("ReceivedFiles\\WPS电信定制版_12.8.2.18205_Setup.exe");
         }
     }
 }

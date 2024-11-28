@@ -96,11 +96,13 @@ namespace SocketClientDemo
         {
             if (!isconect) return;
             var fileName = Path.GetFileName(filePath);
-            var fileSize = new FileInfo(filePath).Length;
+            string filePath1 = filePath.Equals(fileName) ? null:filePath;
+            var fileSize = filePath.Equals(fileName) ? new FileInfo(fileName).Length : new FileInfo(filePath).Length;
+            var metadata = new Message { Type = "file", FileName = fileName, FileSize = fileSize, FilePath = filePath1 };
 
-            var metadata = new Message { Type = "file", FileName = fileName, FileSize = fileSize };
             var metadataJson = JsonSerializer.Serialize(metadata);
             var metadataBuffer = Encoding.UTF8.GetBytes(metadataJson);
+
             await _stream.WriteAsync(metadataBuffer, 0, metadataBuffer.Length);
 
             using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
@@ -121,7 +123,9 @@ namespace SocketClientDemo
         }
         private async Task ReceiveFileAsync(Message message)
         {
-            var filePath = Path.Combine("ReceivedFiles", message.FileName);
+            //var filePath = Path.Combine("ReceivedFiles", message.FileName);
+            //Directory.CreateDirectory(Path.GetDirectoryName(filePath));
+            var filePath = message.FilePath ?? Path.Combine("ReceivedFiles", message.FileName);
             Directory.CreateDirectory(Path.GetDirectoryName(filePath));
 
             long existingSize = 0;
@@ -143,9 +147,11 @@ namespace SocketClientDemo
                 Console.WriteLine($"File {message.FileName} received.");
             };
         }
-        public async Task RequestFileAsync(string fileName)
+        public async Task RequestFileAsync(string filepath)
         {
-            var message = new Message { Type = "request_file", FileName = fileName };
+            string fileName=Path.GetFileName(filepath);
+            filepath = fileName.Equals(filepath) ? "ReceivedFiles\\"+fileName : filepath;
+            var message = new Message { Type = "request_file", FileName = fileName, FilePath=filepath };
             var json = JsonSerializer.Serialize(message);
             var buffer = Encoding.UTF8.GetBytes(json);
             await _stream.WriteAsync(buffer, 0, buffer.Length);
@@ -157,5 +163,6 @@ namespace SocketClientDemo
         public string Text { get; set; }
         public string FileName { get; set; }
         public long FileSize { get; set; }
+        public string FilePath { get; set; }
     }
 }
